@@ -19,6 +19,8 @@ func Getroutes() func(r chi.Router) {
 		r.Post("/validateUser", func(res http.ResponseWriter, req *http.Request) {users.Validate(res, req)})
 		// Delete user
 		r.Post("/deleteUser", func(res http.ResponseWriter, req *http.Request) {users.Delete(res, req)})
+		// Get user info using token
+		r.Get("/getUserInfo", func(res http.ResponseWriter, req *http.Request) {users.GetInfo(res, req)})
 		
 		// POSTS
 

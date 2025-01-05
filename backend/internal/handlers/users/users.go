@@ -176,6 +176,27 @@ func CreateUser(db *sql.DB, username *string, password *string) error {
 	return nil
 }
 
+func GetInfo(res http.ResponseWriter, req *http.Request) {
+	fmt.Println("POST /getUserInfo")
+	db, err := database.GetDB()
+	if err != nil {
+		fmt.Println("Error getting database:", err)
+	}
+	defer db.Close()
+	
+	res.Header().Set("Content-Type", "application/json")
+	access_token := req.Header.Get("Authorization")
+	user_info, err := ParseToken(&access_token)
+	if err != nil {
+		err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: Access token may not be valid", StatusCode: 500})
+		if err != nil {
+			fmt.Println("Unable to encode")
+		}
+		return
+	}
+	json.NewEncoder(res).Encode(models.Response{Payload: user_info, Message: "Success: user info retrieved", StatusCode: 200})
+}
+
 func ValidateUser(db *sql.DB, username *string, password *string) (bool, *string, error) {
 
 	var hashed_password string

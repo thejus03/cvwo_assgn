@@ -53,6 +53,8 @@ function PostView() {
     const [edit, setEdit] = useState<Comment>({});
     const navigate = useNavigate(); 
     const token = Cookies.get('token')
+    const [username, setUsername] = useState('');
+    const [user_id, setUser_id] = useState(-1);
 
     const HandleVotePost = async (post:any, user_id:number, vote_type:string) => {
         const SendInfo = async (vote:string )=> {
@@ -61,7 +63,7 @@ function PostView() {
                 const res = await fetch("http://192.168.200.224:8080/HandleVotePost", {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzYzMzA1NzcsImlhdCI6IjIwMjUtMDEtMDFUMTg6MDI6NTcuMTMzNTc2KzA4OjAwIiwidXNlcl9pZCI6MiwidXNlcm5hbWUiOiJ0aGVqdXMwMyJ9.E_HDmTo7zMDd4OaWvcvY0UslUbm1oYPd4UoSeMrtJVA'
+                        'Authorization': token
                     },
                     body: JSON.stringify({
                         postid: post.id,
@@ -71,8 +73,10 @@ function PostView() {
                     
                 });
                 
-                if (!res.ok) {
-                    console.error('Error voting post');
+                const data = await res.json() 
+                if (data.statusCode != 200) {
+                    console.log('Access token incorrect');
+                    return
                 }
                
                 if (vote === 'upvote') {
@@ -111,12 +115,31 @@ function PostView() {
         }
     }
 
+    const fetchUser = async () => {
+        try {
+            const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
+                method: 'GET',
+                headers: {
+                    "Authorization": token
+                }
+            })
+            const data = await res.json()
+            if (data.statusCode === 200) {
+                console.log(data.payload);
+                setUsername(data.payload.username);
+                setUser_id(data.payload.user_id);
+            }
+        }
+        catch(error) {
+            console.error(error)
+        }
+    }
     const fetchPost = async () => {
         try{
             const res = await fetch(`http://192.168.200.224:8080/getPostByID`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': token,
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({id: postid}),
             });
@@ -131,6 +154,7 @@ function PostView() {
     }
     
     useEffect(() => {
+        fetchUser();
         fetchPost(); 
         setTimeout(() => {
             document.getElementById('scroller')?.scrollIntoView();
@@ -150,7 +174,7 @@ function PostView() {
                 const res = await fetch("http://192.168.200.224:8080/updateComment", {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzYzMzA1NzcsImlhdCI6IjIwMjUtMDEtMDFUMTg6MDI6NTcuMTMzNTc2KzA4OjAwIiwidXNlcl9pZCI6MiwidXNlcm5hbWUiOiJ0aGVqdXMwMyJ9.E_HDmTo7zMDd4OaWvcvY0UslUbm1oYPd4UoSeMrtJVA',
+                        'Authorization': token,
                     },
                     body: JSON.stringify({
                         id: edit.id,
@@ -164,7 +188,7 @@ function PostView() {
                 const res = await fetch("http://192.168.200.224:8080/createComment", {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzYzMzA1NzcsImlhdCI6IjIwMjUtMDEtMDFUMTg6MDI6NTcuMTMzNTc2KzA4OjAwIiwidXNlcl9pZCI6MiwidXNlcm5hbWUiOiJ0aGVqdXMwMyJ9.E_HDmTo7zMDd4OaWvcvY0UslUbm1oYPd4UoSeMrtJVA',
+                        'Authorization': token,
                     },
                     body: JSON.stringify({
                         postid: post.id,
@@ -193,7 +217,7 @@ function PostView() {
             const res = await fetch("http://192.168.200.224:8080/deleteComment",{
                 method: 'POST',
                 headers: {                
-                    "Authorization": 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzYzMzA1NzcsImlhdCI6IjIwMjUtMDEtMDFUMTg6MDI6NTcuMTMzNTc2KzA4OjAwIiwidXNlcl9pZCI6MiwidXNlcm5hbWUiOiJ0aGVqdXMwMyJ9.E_HDmTo7zMDd4OaWvcvY0UslUbm1oYPd4UoSeMrtJVA'
+                    "Authorization": token
                 },
                 body: JSON.stringify({id: comment_id})
             })
@@ -240,10 +264,10 @@ function PostView() {
                         <div className="flex w-fit rounded-full px-1 py-0.5  items-center justify-center bg-lightGray shadow-s mr-4" onClick={(e) => {e.preventDefault()}}>
                         <div>
                             <IconButton aria-label="upvote" color="warning" onClick={() => console.log(post?.id)} >
-                                {"2" in (post?.upvotes || {}) ? (
-                                    <IconArrowBigUpFilled size={18} className="text-orange-700" onClick={() => {HandleVotePost(post, 2, "removeupvote")}}/>
+                                {user_id in (post?.upvotes || {}) ? (
+                                    <IconArrowBigUpFilled size={18} className="text-orange-700" onClick={() => {HandleVotePost(post, user_id, "removeupvote")}}/>
                                     ) : (
-                                        <IconArrowBigUp size={18} className="text-gray-500 hover:text-orange-700" onClick={() =>{HandleVotePost(post, 2, "upvote")}}/>
+                                        <IconArrowBigUp size={18} className="text-gray-500 hover:text-orange-700" onClick={() =>{HandleVotePost(post, user_id, "upvote")}}/>
                                     )
                                 }
                             </IconButton>
@@ -251,12 +275,12 @@ function PostView() {
                         <div className="text-xs text-gray-300 font-bold mr-2">{Object.keys(post?.upvotes || {}).length - Object.keys(post?.downvotes || {}).length}</div>
                         <Divider orientation="vertical" variant='middle' flexItem className='bg-gray-400' />
                         <div>
-                                {"2" in (post?.downvotes || {}) ? (
-                                <IconButton aria-label="comments" color="secondary" onClick={() => HandleVotePost(post, 2, "removedownvote")} >
+                                {user_id in (post?.downvotes || {}) ? (
+                                <IconButton aria-label="comments" color="secondary" onClick={() => HandleVotePost(post, user_id, "removedownvote")} >
                                     <IconArrowBigDownFilled size={18} className='text-violet-500'/>
                                 </IconButton>
                                 ) : (
-                                    <IconButton aria-label="comments" color="secondary" onClick={() =>HandleVotePost(post, 2, "downvote")} >
+                                    <IconButton aria-label="comments" color="secondary" onClick={() =>HandleVotePost(post, user_id, "downvote")} >
                                         <IconArrowBigDown className="text-gray-500 hover:text-violet-500" size={18} />
                                     </IconButton>
                                 )}
@@ -336,7 +360,7 @@ function PostView() {
                                                     <div className='mx-1.5 text-gray-400'>•</div>
                                                 </div>
                                                 <div className='flex flex-row'>
-                                                    {comment.user_id === 2 && (
+                                                    {comment.user_id === user_id && (
                                                         <>
                                                             <IconButton aria-label="comments"  color="info" onClick={() =>handleDelete(comment.id)} >
                                                                 <DeleteIcon className='text-gray-400 hover:text-gray-300'/>

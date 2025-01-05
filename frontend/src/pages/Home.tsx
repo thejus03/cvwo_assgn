@@ -31,8 +31,11 @@ function Home() {
     const [data, Setdata] = useState<Post[]>([]);
     const navigate = useNavigate();
     const token = Cookies.get('token');
+    const [username, setUsername] = useState('');
+    const [user_id, setUser_id] = useState(-1);
     // get all posts from backend
     useEffect(() => {
+        
         const fetchPosts = async () => {
             try {
 
@@ -47,12 +50,34 @@ function Home() {
                     console.error('Error fetching posts');
                 }
                 const data = await res.json();
+                if (data.statusCode === 200) {
+                    Setdata(data.payload);
+                }
                 console.log(data.payload);
-                Setdata(data.payload);
             } catch (error) {
                 console.error('Error fetching posts', error);
             }
         }
+        const fetchUser = async () => {
+            try {
+                const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
+                    method: 'GET',
+                    headers: {
+                        "Authorization": token
+                    }
+                })
+                const data = await res.json()
+                if (data.statusCode === 200) {
+                    console.log(data.payload);
+                    setUsername(data.payload.username);
+                    setUser_id(data.payload.user_id);
+                }
+            }
+            catch(error) {
+                console.error(error)
+            }
+        }
+        fetchUser()
         fetchPosts();
     }, []);
     
@@ -72,9 +97,10 @@ function Home() {
                     })
                     
                 });
-                
-                if (!res.ok) {
-                    console.error('Error voting post');
+                const json_data = await res.json() 
+                if (json_data.statusCode != 200) {
+                    console.log('Access token incorrect');
+                    return
                 }
                 for (let i=0; i < data.length; i++) {
                     if (data[i].id === post.id) {
@@ -126,7 +152,7 @@ function Home() {
                     <input type='text' placeholder='Search for anything' className='w-full max-w-[350px] lg:max-w-[650px] h-12 p-4 border-2 border-sky-700 rounded-full bg-darkGray hover:bg-lightGray hover:border-sky-600 text-white pl-12 focus:outline-none'/>
                 </div> 
                 <div className='flex flex-col mt-10 justify-center items-center mb-10'>
-                    {data.map((post, index) => (
+                    {data?.map((post, index) => (
                         <div className='w-full max-w-[95dvw] lg:max-w-[900px] '>
                             <Divider className='bg-gray-700'/>
                             <div className='max-h-[300px] my-1 pb-3 rounded-3xl hover:bg-lightGray p-1' onClick={(e) => {
@@ -154,10 +180,10 @@ function Home() {
                                         <div className="flex w-fit rounded-full px-1 py-0.5 mx-5 mt-2 items-center justify-center bg-lightGray shadow-sm" onClick={(e) => {e.preventDefault()}}>
                                             <div>
                                                 <IconButton aria-label="upvote" color="warning" onClick={() => console.log(post.id)} >
-                                                {"2" in (post?.upvotes || {}) ? (
-                                                    <IconArrowBigUpFilled size={18} className="text-orange-700" onClick={() => {HandleVotePost(post, 2, "removeupvote")}}/>
+                                                { user_id in (post?.upvotes || {}) ? (
+                                                    <IconArrowBigUpFilled size={18} className="text-orange-700" onClick={() => {HandleVotePost(post, user_id, "removeupvote")}}/>
                                                     ) : (
-                                                        <IconArrowBigUp size={18} className="text-gray-500 hover:text-orange-700" onClick={() =>{HandleVotePost(post, 2, "upvote")}}/>
+                                                        <IconArrowBigUp size={18} className="text-gray-500 hover:text-orange-700" onClick={() =>{HandleVotePost(post, user_id, "upvote")}}/>
                                                     )
                                                 }
                                                 </IconButton>
@@ -165,12 +191,12 @@ function Home() {
                                             <div className="text-xs text-gray-300 font-bold mr-2 font-extrabold ">{Object.keys(post.upvotes).length - Object.keys(post.downvotes).length}</div>
                                             <Divider orientation="vertical" variant='middle' flexItem className='bg-gray-400' />
                                             <div>
-                                                {"2" in (post?.downvotes || {}) ? (
-                                                    <IconButton aria-label="comments" color="secondary" onClick={() => HandleVotePost(post, 2, "removedownvote")} >
+                                                {user_id in (post?.downvotes || {}) ? (
+                                                    <IconButton aria-label="comments" color="secondary" onClick={() => HandleVotePost(post, user_id, "removedownvote")} >
                                                         <IconArrowBigDownFilled size={18} className='text-violet-500'/>
                                                     </IconButton>
                                                     ) : (
-                                                        <IconButton aria-label="comments" color="secondary" onClick={() =>HandleVotePost(post, 2, "downvote")} >
+                                                        <IconButton aria-label="comments" color="secondary" onClick={() =>HandleVotePost(post, user_id, "downvote")} >
                                                             <IconArrowBigDown className="text-gray-500 hover:text-violet-500" size={18} />
                                                         </IconButton>
                                                 )}

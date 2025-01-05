@@ -192,16 +192,16 @@ func GetByID(res http.ResponseWriter, req *http.Request) {
 	defer db.Close()
 	res.Header().Set("Content-Type", "application/json")
 
-	// Check if valid user
-	access_token := req.Header.Get("Authorization")
-	_, err = users.ParseToken(&access_token)
-	if err != nil {
-		err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: Access token may not be valid", StatusCode: 500})
-		if err != nil {
-			fmt.Println("Unable to encode")
-		}
-		return
-	}
+	// // Check if valid user
+	// access_token := req.Header.Get("Authorization")
+	// _, err = users.ParseToken(&access_token)
+	// if err != nil {
+	// 	err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: Access token may not be valid", StatusCode: 500})
+	// 	if err != nil {
+	// 		fmt.Println("Unable to encode")
+	// 	}
+	// 	return
+	// }
 
 	// Get post id from body
 	json_body, err := io.ReadAll(req.Body)
