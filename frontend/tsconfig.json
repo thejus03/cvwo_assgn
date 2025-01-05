@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+     "esModuleInterop": true,
+      "outDir": "dist",
+      "rootDir": "src",
+      "sourceMap": true,
+      "noImplicitAny": true,
+      "allowJs": true,
+      "moduleResolution": "node",
+      "module": "commonJS",
+      "lib": ["es6", "dom"],
+      "target": "ES5",
+      "jsx": "react-jsx"
+    },
+    "exclude": ["node_modules", "dist"]
+  }
+  
