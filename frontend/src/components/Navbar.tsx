@@ -8,7 +8,10 @@ import Cookies from 'js-cookie';
 import Alert from '@mui/material/Alert';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
-import { Avatar } from '@mui/material';
+import { Avatar, ListItem, ListItemIcon, ListItemText, MenuList, Paper } from '@mui/material';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
 
 type user = {
     username?: string;
@@ -21,6 +24,15 @@ function Navbar() {
     const [user_info, setUserinfo] = useState<user>({});
     const [dropdown, SetDropdown] = useState(false);
     const token = Cookies.get('token');
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleMenuOpen = (e: any) => {
+    setAnchorEl(e.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+    setAnchorEl(null);
+    };
     const getUser  = async () => {
         try {
             const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
@@ -61,6 +73,7 @@ function Navbar() {
                 if (data.statusCode === 200) {
                     Cookies.set('token', data.payload)
                     setIsLogin(false)
+                    window.location.reload();
                 } else {
                     alert('Invalid credentials')
                     setUsername('')
@@ -73,6 +86,11 @@ function Navbar() {
         }
     }
 
+    const handleLogOff = () => {
+        Cookies.remove('token')
+        window.location.reload()
+    }
+
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(false);
     return (
@@ -83,27 +101,47 @@ function Navbar() {
                     <div className='ml-2 text-md lg:text-3xl font-bold text-white font-mono underline decoration-sky-500'>Bugs & Suggestions</div>
                 </div>
                 {Object.keys(user_info).length > 0 ? (
-                    <>
-                        <div className='flex items-center' onClick={() => SetDropdown(!dropdown)}>
+                    <div>
+                        <div className='flex items-center' id="basic-menu" onClick={handleMenuOpen}>
                                 <Avatar
-                                    sx={{ width: 50, height: 50 }}
+                                    sx={{ width: 45, height: 45 }}
                                     alt={user_info?.username}
                                     src="/broken-image.jpg"
-                                    className='border-2 border-sky-500'
+                                    className='border-2 border-sky-500 mb-2'
                                     />
                             
                         </div>
-                        {dropdown && (
-                            <div className='absolute top-14 right-0 bg-lightGray w-40 rounded-xl p-2 '>
-                                <div className='text-gray-400 text-center'>{user_info?.username}</div>
-                                <div className='h-[2px] bg-white w-full mt-2'></div>
-                                <div className='mt-2 text-center'>
-                                    <Button variant='outlined' color='warning' onClick={() => navigate('/profile')} >Profile</Button>
-                                    <Button variant='outlined' color='warning' onClick={() => navigate('/logout')} >Logout</Button>
-                                </div>
-                            </div>
-                        )}
-                    </>
+                        <Paper elevation={3} square={false}>
+
+                            <Menu
+                                id="basic-menu"
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleMenuClose}
+                                MenuListProps={{
+                                'aria-labelledby': 'basic-button', 
+                                }}
+                            >
+                                <MenuList className='bg-lightGray focus:outline-none'>
+                                    <MenuItem className='bg-gray-300'>
+                                    <div className='italic text-gray-400 '>
+                                        @{user_info.username}
+                                    </div>
+                                    </MenuItem>
+                                    <MenuItem onClick={handleLogOff}>
+
+                                        <ListItemIcon>
+                                            <LockIcon fontSize="small" color='error'/>
+                                        </ListItemIcon>
+                                        <ListItemText className='font-extrabold text-gray-400'>
+                                            Logout
+                                        </ListItemText>
+                                    
+                                    </MenuItem>
+                                </MenuList>
+                            </Menu>
+                        </Paper>
+                    </div>
                 ):(
                     <>
                         <Button variant='outlined' color='warning' onClick={() => setIsLogin(!isLogin)} startIcon={<LockIcon />} >Login </Button>

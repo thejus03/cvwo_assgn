@@ -163,12 +163,17 @@ function PostView() {
     }, []);
 
     const clickComment = () => {
+        if (token === undefined) {
+            console.log('not logged in')
+            return 
+        }
         setCommentState(!commentState);
         setReply({});
         setEdit({});
     }
 
     const handleComment = async () => {
+        
         try {
             if (Object.keys(edit).length > 0) {
                 const res = await fetch("http://192.168.200.224:8080/updateComment", {
@@ -242,9 +247,11 @@ function PostView() {
             <div className='flex flex-col justify-center w-full max-w-5xl mx-auto h-full'>
                 <div className='mt-7 flex flex-col items-start px-5 pb-10'>
                     <div className='flex flex-row items-center'>
-                        <IconButton aria-label="comments" color="info" onClick={() => navigate("/")} >
-                            <IconArrowLeft size={20} className='text-gray-300 mr-2'/>
-                        </IconButton>
+                        <div className='mr-1'>
+                            <IconButton aria-label="comments" color="info" onClick={() => navigate("/")} >
+                                <IconArrowLeft size={20} className='text-gray-300'/>
+                            </IconButton>
+                        </div>
                         <div className='text-xs text-left text-gray-400'>Posted by @{post?.metadata?.user?.name}</div>
                         <div className='mx-1.5 text-gray-400'>•</div>
                         <div className='text-xs text-left text-gray-400'>{formatDistanceToNow(new Date(post?.created_at || 0), {addSuffix: false})} ago</div>
@@ -296,7 +303,7 @@ function PostView() {
                     <div className='w-full mt-6'>
                         <div className='w-full mx-auto flex justify-center'>
                             {commentState ? (
-                                <input type='text' onClick={() => clickComment()} placeholder='Add a comment' className='w-full h-12 p-5 border border-gray-600 rounded-full bg-darkGray focus:outline-none focus:border-gray-400'/>
+                                <div onClick={() => clickComment()} className='w-full h-12 py-3 px-3 border border-gray-600 rounded-full bg-darkGray text-gray-400  text-left hover:border-gray-500'>Add a comment</div>
                             ) : (
                                 <div className='w-full flex flex-col border border-gray-600 rounded-3xl p-2'>
                                     {Object.keys(reply).length > 0 && (
