@@ -15,7 +15,7 @@ Note: Please download the video if it does not show in gdrive
 
 ## Technologies
 - Go (Backend)
-- Gin (Web framework)
+- Chi (Web framework)
 - ReactJS (Frontend)
 - PostgreSQL (Database)
 - MUI (UI library)
