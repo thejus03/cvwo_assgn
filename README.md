@@ -1,4 +1,4 @@
-# Forum page
+# Forum page by Thejus Unnikrishnan
 ## A concept app for creating and managing forums.
 - Live Demo: [Link](https://drive.google.com/file/d/1TfeNVJgalFSmdPfNIHab2mHLP12N4UPi/view?usp=sharing)
 Note: Please download the video if it does not show in gdrive
