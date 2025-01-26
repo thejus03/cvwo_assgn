@@ -1,6 +1,7 @@
 # Forum page
 ## A concept app for creating and managing forums.
-
+- Live Demo: [Link](https://drive.google.com/file/d/0TfeNVJgalFSmdPfNIHab2mHLP12N4UPi/view?usp=sharing)
+- Mobile Demo: [Link](https://drive.google.com/file/d/17BFiwqlUPH27HsQJutssEqvITBcfCig7/view?usp=sharing)
 ## Features
 - User registration and login
 - Create, read, update posts
@@ -9,6 +10,7 @@
 - Reply to comments
 - Upvote and downvote posts
 - Tagging system
+- Mobile responsive
 
 ## Technologies
 - Go (Backend)
