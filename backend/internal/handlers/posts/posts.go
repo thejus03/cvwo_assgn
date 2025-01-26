@@ -19,7 +19,7 @@ type post struct {
 	Userid      int    `json:"userid"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Tags        []int  `json:"tags"`
+	Tags        []string  `json:"tags"`
 }
 
 func Create(res http.ResponseWriter, req *http.Request) {
@@ -106,73 +106,12 @@ func GetAll(res http.ResponseWriter, req *http.Request) {
 
 	defer rows.Close()
 
-	var posts []models.Post
-	for rows.Next() {
-		var post models.Post
-		var upvotes []byte
-		var downvotes []byte
-		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Description, &post.CreatedAt, pq.Array(&post.Tags), &upvotes, &downvotes)
+	posts, err := parsePosts(rows, db)
+	if err != nil {
+		err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: unable to parse posts", StatusCode: 500})
 		if err != nil {
-			err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: unable to scan", StatusCode: 500})
-			if err != nil {
-				fmt.Println("Unable to encode")
-			}
-			return
+			fmt.Println("Unable to encode")
 		}
-
-		// Convert upvotes to map
-		var upvotesMap map[string]bool
-		var downvotesMap map[string]bool
-		err = json.Unmarshal(upvotes, &upvotesMap)
-		if err != nil {
-			err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: unable to decode", StatusCode: 500})
-			if err != nil {
-				fmt.Println("Unable to encode")
-			}
-			return
-		}
-		post.Upvotes = upvotesMap
-
-		err = json.Unmarshal(downvotes, &downvotesMap)
-		if err != nil {
-			err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: unable to decode", StatusCode: 500})
-			if err != nil {
-				fmt.Println("Unable to encode")
-			}
-			return
-		}
-		post.Downvotes = downvotesMap
-
-		// For each post, get the metadata ie tag info and comment info
-		var tagInfo []models.Tag
-		for _, tag_id := range post.Tags {
-			tag_id := int(tag_id)
-			tag, err := tags.GetTagFromID(db, &tag_id)
-			if err != nil {
-				fmt.Println("Error getting tag info")
-			}
-			tagInfo = append(tagInfo, tag)
-		}
-
-		// Get the user info of who posted
-		user, err := users.GetUserByID(db, &post.UserID)
-		if err != nil {
-			fmt.Println("Error getting user info")
-		}
-		post.Metadata = make(map[string]any)
-		post.Metadata["user"] = *user
-		post.Metadata["tags"] = tagInfo
-
-		// Get comments for the post
-		comms, err := comments.GetByPostID(db, &post.ID)
-		if err != nil {
-			fmt.Println("Error getting comments", err)
-		}
-
-		post.Comments = comms
-
-		// Finally, append the post to the slice of posts
-		posts = append(posts, post)
 	}
 
 	// Encode and send all posts
@@ -363,6 +302,61 @@ func HandleVoteByID(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func Search(res http.ResponseWriter, req *http.Request) {
+	fmt.Println("POST /search")
+	db, err := database.GetDB()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Close()
+
+	res.Header().Set("Content-Type", "application/json")
+
+	// Read the body
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		fmt.Println("Error reading body")
+	}
+
+	var data struct {
+		Query string `json:"query"`
+	}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		fmt.Println("Error decoding body")
+	}
+
+	// Query for all posts
+	rows, err := db.Query("SELECT id, userid, title, description, createdat, tags, upvotes, downvotes FROM posts WHERE title ILIKE $1 OR description ILIKE $1 ORDER BY createdat DESC;", "%"+data.Query+"%")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	posts, err := parsePosts(rows, db)
+	if err != nil {
+		err := json.NewEncoder(res).Encode(models.Response{Payload: err.Error(), Message: "Error: unable to parse posts", StatusCode: 500})
+		if err != nil {
+			fmt.Println("Unable to encode")
+		}
+	}
+
+	// Encode and send all posts
+	err = json.NewEncoder(res).Encode(models.Response{Payload: posts, Message: "Success: all posts", StatusCode: 200})
+	if err != nil {
+		fmt.Println("Unable to encode")
+	}
+
+}
+
+
+
+
+
+
+
+
 // Helper function
 func createPost(db *sql.DB, data *post) error {
 	stmt, err := db.Prepare("INSERT INTO posts (userid, title, description, tags) VALUES ($1, $2, $3, $4)")
@@ -371,8 +365,23 @@ func createPost(db *sql.DB, data *post) error {
 	}
 
 	defer stmt.Close()
+	var tagInt []int
+	for _, tag := range data.Tags {
+		stmt, err := db.Prepare("SELECT id FROM tags WHERE name = $1")
+		if err != nil {
+			return err
+		}
+		defer stmt.Close()
+		var res int;
+		err = stmt.QueryRow(tag).Scan(&res)
+		if err != nil {
+			return err
+		}
+		tagInt = append(tagInt, res)
+	}
 
-	_, err = stmt.Exec(data.Userid, data.Title, data.Description, pq.Array(data.Tags))
+
+	_, err = stmt.Exec(data.Userid, data.Title, data.Description, pq.Array(tagInt))
 	if err != nil {
 		return err
 	}
@@ -496,4 +505,73 @@ func removeDownvote(db *sql.DB, res http.ResponseWriter, data *payload) {
 		fmt.Println("Unable to encode")
 		return
 	}
+}
+
+func parsePosts(rows *sql.Rows, db *sql.DB) ([]models.Post, error) {
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		var upvotes []byte
+		var downvotes []byte
+		err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Description, &post.CreatedAt, pq.Array(&post.Tags), &upvotes, &downvotes)
+		if err != nil {
+			if err != nil {
+				fmt.Println("Unable to encode")
+			}
+			return nil, err
+		}
+
+		// Convert upvotes to map
+		var upvotesMap map[string]bool
+		var downvotesMap map[string]bool
+		err = json.Unmarshal(upvotes, &upvotesMap)
+		if err != nil {
+			if err != nil {
+				fmt.Println("Unable to encode")
+			}
+			return nil, err
+		}
+		post.Upvotes = upvotesMap
+
+		err = json.Unmarshal(downvotes, &downvotesMap)
+		if err != nil {
+			if err != nil {
+				fmt.Println("Unable to encode")
+			}
+			return nil, err
+		}
+		post.Downvotes = downvotesMap
+
+		// For each post, get the metadata ie tag info and comment info
+		var tagInfo []models.Tag
+		for _, tag_id := range post.Tags {
+			tag_id := int(tag_id)
+			tag, err := tags.GetTagFromID(db, &tag_id)
+			if err != nil {
+				fmt.Println("Error getting tag info")
+			}
+			tagInfo = append(tagInfo, tag)
+		}
+
+		// Get the user info of who posted
+		user, err := users.GetUserByID(db, &post.UserID)
+		if err != nil {
+			fmt.Println("Error getting user info")
+		}
+		post.Metadata = make(map[string]any)
+		post.Metadata["user"] = *user
+		post.Metadata["tags"] = tagInfo
+
+		// Get comments for the post
+		comms, err := comments.GetByPostID(db, &post.ID)
+		if err != nil {
+			fmt.Println("Error getting comments", err)
+		}
+
+		post.Comments = comms
+
+		// Finally, append the post to the slice of posts
+		posts = append(posts, post)
+	}
+	return posts, nil
 }

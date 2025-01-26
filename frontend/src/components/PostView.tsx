@@ -60,7 +60,7 @@ function PostView() {
         const SendInfo = async (vote:string )=> {
 
             try {
-                const res = await fetch("http://192.168.200.224:8080/HandleVotePost", {
+                const res = await fetch("http://localhost:8080/HandleVotePost", {
                     method: 'POST',
                     headers: {
                         'Authorization': token
@@ -117,7 +117,7 @@ function PostView() {
 
     const fetchUser = async () => {
         try {
-            const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
+            const res = await fetch('http://localhost:8080/getUserInfo', {
                 method: 'GET',
                 headers: {
                     "Authorization": token
@@ -136,7 +136,7 @@ function PostView() {
     }
     const fetchPost = async () => {
         try{
-            const res = await fetch(`http://192.168.200.224:8080/getPostByID`, {
+            const res = await fetch(`http://localhost:8080/getPostByID`, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -176,7 +176,7 @@ function PostView() {
         
         try {
             if (Object.keys(edit).length > 0) {
-                const res = await fetch("http://192.168.200.224:8080/updateComment", {
+                const res = await fetch("http://localhost:8080/updateComment", {
                     method: 'POST',
                     headers: {
                         'Authorization': token,
@@ -190,14 +190,14 @@ function PostView() {
                 setComments(comments.map((c: any) => c.id === edit.id ? {...c, description: text} : c));
             } else {
 
-                const res = await fetch("http://192.168.200.224:8080/createComment", {
+                const res = await fetch("http://localhost:8080/createComment", {
                     method: 'POST',
                     headers: {
                         'Authorization': token,
                     },
                     body: JSON.stringify({
                         postid: post.id,
-                        user_id: 2,
+                        user_id: user_id,
                         description: text,
                         replyid: reply.id || -1
                     })
@@ -212,6 +212,9 @@ function PostView() {
     }
 
     const handleReply = (reply_id: number)=> {
+        if (user_id === -1) {
+            return
+        }
         var replied_comment = comments.find((c: any) => c.id === reply_id);
         setReply(replied_comment);
         setCommentState(false);
@@ -219,7 +222,7 @@ function PostView() {
 
     const handleDelete = async (comment_id: number) => {
         try {
-            const res = await fetch("http://192.168.200.224:8080/deleteComment",{
+            const res = await fetch("http://localhost:8080/deleteComment",{
                 method: 'POST',
                 headers: {                
                     "Authorization": token
@@ -356,6 +359,7 @@ function PostView() {
                                     if (comment.reply_id !== -1) {
                                         replyComment = comments.find((c: any) => c.id === comment.reply_id);
                                     }
+                                    console.log(comment)
 
                                     return (
                                         <div className='w-full mb-4'>

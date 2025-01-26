@@ -3,6 +3,7 @@ import React from 'react';
 import './App.css';
 import Home from './pages/Home';
 import PostView from './components/PostView';
+import Create from './pages/Create';
 import { createBrowserRouter, RouterProvider, ScrollRestoration } from 'react-router-dom';
 
 const routes = createBrowserRouter([
@@ -14,6 +15,10 @@ const routes = createBrowserRouter([
     path: '/post/:postid',
     element: <PostView />,
   },
+  {
+    path: '/create',
+    element: <Create />,
+  }
 ]);
 function App() {
   return (

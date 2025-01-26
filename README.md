@@ -1,6 +1,23 @@
 # Forum page
 ## A concept app for creating and managing forums.
 
+## Features
+- User registration and login
+- Create, read, update posts
+- Create, read, update, delete comments
+- Global Search
+- Reply to comments
+- Upvote and downvote posts
+- Tagging system
+
+## Technologies
+- Go (Backend)
+- Gin (Web framework)
+- ReactJS (Frontend)
+- PostgreSQL (Database)
+- MUI (UI library)
+- JWT (Authentication)
+
 ## Installation
 1. Clone the repository
 2. Install the dependencies
@@ -16,4 +33,3 @@ cd frontend
 npm install 
 npm start
 ```
-

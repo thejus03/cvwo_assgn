@@ -34,7 +34,7 @@ func Getroutes() func(r chi.Router) {
 		r.Post("/getPostByID", func(res http.ResponseWriter, req *http.Request) {posts.GetByID(res, req)})	
 
 
-		// Comments
+		// COMMENTS
 
 		// Create new comment
 		r.Post("/createComment", func(res http.ResponseWriter, req *http.Request) {comments.Create(res, req)})
@@ -42,5 +42,8 @@ func Getroutes() func(r chi.Router) {
 		r.Post("/deleteComment", func(res http.ResponseWriter, req *http.Request) {comments.Delete(res, req)})
 		// Update comment
 		r.Post("/updateComment", func(res http.ResponseWriter, req *http.Request) {comments.Update(res, req)})
+
+		// SEARCH
+		r.Post("/search", func(res http.ResponseWriter, req *http.Request) {posts.Search(res, req)})
 	}
 } 

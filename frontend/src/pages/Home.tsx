@@ -39,7 +39,7 @@ function Home() {
         const fetchPosts = async () => {
             try {
 
-                const res = await fetch("http://192.168.200.224:8080/getAllPosts", {
+                const res = await fetch("http://localhost:8080/getAllPosts", {
                     method: 'GET',
                     headers: {
                        'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ function Home() {
         }
         const fetchUser = async () => {
             try {
-                const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
+                const res = await fetch('http://localhost:8080/getUserInfo', {
                     method: 'GET',
                     headers: {
                         "Authorization": token
@@ -85,7 +85,7 @@ function Home() {
         const SendInfo = async (vote:string )=> {
 
             try {
-                const res = await fetch("http://192.168.200.224:8080/HandleVotePost", {
+                const res = await fetch("http://localhost:8080/HandleVotePost", {
                     method: 'POST',
                     headers: {
                         'Authorization': token
@@ -141,6 +141,31 @@ function Home() {
             await SendInfo(vote_type);
         }
     }
+    const handleQuery = async (e: any) => {
+        try {
+
+            const res = await fetch("http://localhost:8080/search", {
+                method: 'POST',
+                headers: {
+                   'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: e.target.value
+                })
+            });
+    
+            if (!res.ok) {
+                console.error('Error fetching posts');
+            }
+            const data = await res.json();
+            if (data.statusCode === 200) {
+                Setdata(data.payload);
+            }
+            console.log(data.payload);
+        } catch (error) {
+            console.error('Error fetching posts', error);
+        } 
+    }
 
     return (
         <div className='bg-darkGray text-white min-h-screen'>
@@ -149,7 +174,7 @@ function Home() {
             <div className='flex flex-col justify-center w-full max-w-7xl mx-auto h-full'>
                 <div className='w-full mx-auto mt-5'>
                     <SearchIcon className='absolute mt-[13px] ml-4 text-gray-500'/>
-                    <input type='text' placeholder='Search for anything' className='w-full max-w-[350px] lg:max-w-[650px] h-12 p-4 border-2 border-sky-700 rounded-full bg-darkGray hover:bg-lightGray hover:border-sky-600 text-white pl-12 focus:outline-none'/>
+                    <input type='text' placeholder='Describe your issue or suggestion' onChange={(e) => handleQuery(e)} className='w-full max-w-[350px] lg:max-w-[650px] h-12 p-4 border-2 border-sky-700 rounded-full bg-darkGray hover:bg-lightGray hover:border-sky-600 text-white pl-12 focus:outline-none'/>
                 </div> 
                 <div className='flex flex-col mt-10 justify-center items-center mb-10'>
                     {data?.map((post, index) => (

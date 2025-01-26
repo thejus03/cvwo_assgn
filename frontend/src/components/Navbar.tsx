@@ -12,6 +12,7 @@ import { Avatar, ListItem, ListItemIcon, ListItemText, MenuList, Paper } from '@
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
+import AddIcon from '@mui/icons-material/Add';
 
 type user = {
     username?: string;
@@ -22,7 +23,6 @@ type user = {
 
 function Navbar() {
     const [user_info, setUserinfo] = useState<user>({});
-    const [dropdown, SetDropdown] = useState(false);
     const token = Cookies.get('token');
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -35,7 +35,7 @@ function Navbar() {
     };
     const getUser  = async () => {
         try {
-            const res = await fetch('http://192.168.200.224:8080/getUserInfo', {
+            const res = await fetch('http://localhost:8080/getUserInfo', {
                 method: 'GET',
                 headers: {
                     "Authorization": token
@@ -59,7 +59,7 @@ function Navbar() {
     const [password, setPassword] = useState('');
     const validate = async () => {
         try {
-            const res = await fetch('http://192.168.200.224:8080/validateUser', {
+            const res = await fetch('http://localhost:8080/validateUser', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -91,6 +91,7 @@ function Navbar() {
         window.location.reload()
     }
 
+
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(false);
     return (
@@ -102,45 +103,56 @@ function Navbar() {
                 </div>
                 {Object.keys(user_info).length > 0 ? (
                     <div>
-                        <div className='flex items-center' id="basic-menu" onClick={handleMenuOpen}>
-                                <Avatar
-                                    sx={{ width: 45, height: 45 }}
-                                    alt={user_info?.username}
-                                    src="/broken-image.jpg"
-                                    className='border-2 border-sky-500 mb-2'
-                                    />
-                            
-                        </div>
-                        <Paper elevation={3} square={false}>
+                        <div className='flex flex-row justify-between items-end'>
 
-                            <Menu
-                                id="basic-menu"
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={handleMenuClose}
-                                MenuListProps={{
-                                'aria-labelledby': 'basic-button', 
-                                }}
-                            >
-                                <MenuList className='bg-lightGray focus:outline-none'>
-                                    <MenuItem className='bg-gray-300'>
-                                    <div className='italic text-gray-400 '>
-                                        @{user_info.username}
-                                    </div>
-                                    </MenuItem>
-                                    <MenuItem onClick={handleLogOff}>
-
-                                        <ListItemIcon>
-                                            <LockIcon fontSize="small" color='error'/>
-                                        </ListItemIcon>
-                                        <ListItemText className='font-extrabold text-gray-400'>
-                                            Logout
-                                        </ListItemText>
+                            <div>
+                                <IconButton onClick={() => navigate('/create')} >
+                                    <AddIcon color='warning' sx={{ fontSize: 34}}/>
+                                </IconButton>
+                            </div>
+                            <div>
+                                <div className='flex items-center' id="basic-menu" onClick={handleMenuOpen}>
+                                    <Avatar
+                                        sx={{ width: 40, height: 40 }}
+                                        alt={user_info?.username}
+                                        src="/broken-image.jpg"
+                                        className='border-2 border-sky-500 mb-2'
+                                        />
                                     
+                                </div>
+                                
+                                <Paper elevation={3} square={false}>
+
+                                    <Menu
+                                        id="basic-menu"
+                                        anchorEl={anchorEl}
+                                        open={Boolean(anchorEl)}
+                                        onClose={handleMenuClose}
+                                        MenuListProps={{
+                                        'aria-labelledby': 'basic-button', 
+                                        }}
+                                    >
+                                        <MenuList className='bg-lightGray focus:outline-none'>
+                                            <MenuItem className='bg-gray-300'>
+                                            <div className='italic text-gray-400 '>
+                                                @{user_info.username}
+                                            </div>
+                                            </MenuItem>
+                                            <MenuItem onClick={handleLogOff}>
+
+                                                <ListItemIcon>
+                                                    <LockIcon fontSize="small" color='error'/>
+                                                </ListItemIcon>
+                                                <ListItemText className='font-extrabold text-gray-400'>
+                                                    Logout
+                                                </ListItemText>
+                                            
                                     </MenuItem>
                                 </MenuList>
                             </Menu>
                         </Paper>
+                    </div>
+                        </div>
                     </div>
                 ):(
                     <>
